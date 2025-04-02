@@ -2,19 +2,33 @@ import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext'
 import { assets, dummyDashboardData } from '../../assets/assets'
 import Loading from '../../components/student/Loading'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const Dashboard = () => {
   
-  const {currency} = useContext(AppContext)
+  const {currency, backendUrl, isInstructor, getToken} = useContext(AppContext)
   const [dashboardData, setDashboardData] = useState(null)
 
   const fetchDashBoardData = async () =>{
-    setDashboardData(dummyDashboardData)
+    try {
+      const token = await getToken();
+      const {data} = await axios.get(backendUrl+'/api/instructor/dashboard',{headers:{Authorization:`Bearer ${token}`}})
+      if(data.success){
+        setDashboardData(data.dashboardData);
+      }
+      else{
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
 
   useEffect(()=>{
+    if(isInstructor)
     fetchDashBoardData()
-  }, [])
+  }, [isInstructor])
 
   return dashboardData ? (
     <div className='min-h-screen flex flex-col items-start justify-between gap-8 md:p-8 md:pb-0 p-4 pt-8 pb-0'>
@@ -37,7 +51,7 @@ const Dashboard = () => {
           <div className='flex items-center gap-3 shadow-card border border-blue-500 p-4 w-56 rounded-md'>
             <img src={assets.earning_icon} alt="Patient icon" />
             <div>
-              <p className='text-2xl font-medium text-gray-600'>{dashboardData.totalEarnings}</p>
+              <p className='text-2xl font-medium text-gray-600'>{currency}{dashboardData.totalEarnings}</p>
               <p className='text-base text-gray-500'>Total Earnings</p>
             </div>
           </div>

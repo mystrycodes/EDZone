@@ -1,18 +1,35 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { dummyStudentEnrolled } from '../../assets/assets'
 import Loading from '../../components/student/Loading'
+import { AppContext } from '../../context/AppContext'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const StudentsEnrolled = () => {
+
+  const {backendUrl, getToken, isInstructor} = useContext(AppContext)
 
   const [enrolledStudents, setEnrolledStudents] = useState(null)
 
   const fetchEnrolledStudents = async () => {
-    setEnrolledStudents(dummyStudentEnrolled)
+    try {
+      const token = await getToken();
+      const {data} = await axios.get(backendUrl+'/api/instructor/enrolled-students', {headers:{Authorization:`Bearer ${token}`}})
+      if(data.success){
+        setEnrolledStudents(data.enrolledStudents.reverse());
+      }
+      else{
+        toast.error(data.message+"from else");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
 
   useEffect(()=>{
+    if(isInstructor)
     fetchEnrolledStudents()
-  },[])
+  },[isInstructor])
 
   return enrolledStudents ? (
     <div className='min-h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>

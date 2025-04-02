@@ -6,6 +6,8 @@ import { assets } from '../../assets/assets'
 import humanizeDuration from 'humanize-duration'
 import Footer from '../../components/student/Footer'
 import YouTube from 'react-youtube'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const CourseDetails = () => {
 
@@ -16,16 +18,54 @@ const CourseDetails = () => {
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [previewData, setPreviewData] = useState(null)
 
-  const { allCourses, calculateAverageRating, calculateChapterTime, calculateCourseDuration, calculateNoOfLectures, currency } = useContext(AppContext)
+  const { allCourses, calculateAverageRating, calculateChapterTime, calculateCourseDuration, calculateNoOfLectures, currency, backendUrl, userData, getToken } = useContext(AppContext)
 
   const fetchCourseData = async () => {
-    const findCourse = allCourses.find(course => course._id === id)
-    setCourseData(findCourse);
+    try {
+      const {data} = await axios.get(backendUrl+'/api/course/'+id)
+      if(data.success){
+        setCourseData(data.courseData)
+      }
+      else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
+
+  // Function to enroll into a course
+  const enrollCourse = async () =>{
+    try {
+      if(!userData){
+        return toast.warn("Login to Enroll")
+      }
+      if(isEnrolled){
+        return toast.warn("Already Enrolled")
+      }
+      const token = await getToken();
+
+      const {data} = await axios.post(backendUrl+'/api/user/purchase',{courseId:courseData._id},{headers:{Authorization:`Bearer ${token}`}})
+      if(data.success){
+        const {session_url} = data;
+        window.location.replace(session_url);
+      }
+      else{
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
 
   useEffect(() => {
     fetchCourseData()
-  }, [allCourses])
+  }, [])
+  useEffect(() => {
+    if (userData && courseData) {
+      setIsEnrolled(userData.enrolledCourses.includes(courseData._id))
+    }
+  }, [userData, courseData])
 
   const toggleSection = (index) => {
     setopenSection((prev) => (
@@ -56,9 +96,9 @@ const CourseDetails = () => {
               }
             </div>
             <p className='text-blue-600'>({courseData.courseRatings.length} {courseData.courseRatings.length > 1 ? "ratings" : "rating"})</p>
-            <p>{courseData.enrolledStudents.length} {courseData.enrolledStudents.length > 1 ? "students" : 'student'}</p>
+            <p>{courseData.enroledStudents.length} {courseData.enroledStudents.length > 1 ? "students" : 'student'}</p>
           </div>
-          <p className='text-sm'>Course by <span className='text-blue-600 underline'>AIBrains</span> </p>
+          <p className='text-sm'>Course by <span className='text-blue-600 underline'>{courseData.instructor.name}</span> </p>
           <div className='pt-8 text-gray-800'>
             <h2 className='text-xl font-semibold'>Course Outline</h2>
             <div className='pt-5'>
@@ -144,7 +184,7 @@ const CourseDetails = () => {
               </div>
 
             </div>
-            <button className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium'
+            <button onClick={enrollCourse} className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium'
             >{isEnrolled ? 'Enrolled' : 'Enroll Now'}</button>
 
             <div className='pt-6'>

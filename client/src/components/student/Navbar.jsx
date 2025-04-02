@@ -3,15 +3,37 @@ import { assets } from '../../assets/assets'
 import { Link } from 'react-router-dom'
 import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { AppContext } from '../../context/AppContext'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const Navbar = () => {
 
-  const {navigate, isInstructor} = useContext(AppContext)
+  const {navigate, isInstructor, backendUrl, setIsInstructor, getToken} = useContext(AppContext)
 
   const isCourseListPage = location.pathname.includes('/course-list');
 
   const { openSignIn } = useClerk()
   const { user } = useUser()
+
+  const becomeInstructor = async ()=>{
+    try {
+      if(isInstructor){
+        navigate('/instructor');
+        return;
+      }
+      const token = await getToken()
+      const {data} = await axios.get(backendUrl+'/api/instructor/update-role',{headers:{Authorization:`Bearer ${token}`}})
+      if(data.success){
+        setIsInstructor();
+        toast.success(data.message)
+      }
+      else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
 
   return (
     <div className={`flex items-center justify-between px-4 sm:px-10 md:px-14 lg:px-36 border-b border-gray-500 py-4
@@ -21,7 +43,7 @@ const Navbar = () => {
         <div className='flex items-center gap-5'>
           {user &&
             <>
-              <button onClick={()=>navigate('/instructor')}>{isInstructor?"Instructor Dashboard":"Become an Instructor"}</button>
+              <button onClick={becomeInstructor}>{isInstructor?"Instructor Dashboard":"Become an Instructor"}</button>
               | <Link to='/my-enrollments'>My Enrollments</Link>
             </>
           }
@@ -37,7 +59,7 @@ const Navbar = () => {
         <div className='flex items-center gap-1 sm:gap-2 max-sm:text-xs'>
           {user &&
             <>
-               <button onClick={()=>navigate('/instructor')}>{isInstructor?"Instructor Dashboard":"Become an Instructor"}</button>
+               <button onClick={becomeInstructor}>{isInstructor?"Instructor Dashboard":"Become an Instructor"}</button>
                | <Link to='/my-enrollments'>My Enrollments</Link>
             </>
           }

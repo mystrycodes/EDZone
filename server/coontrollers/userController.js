@@ -116,8 +116,9 @@ export const updateUserCourseProgress = async (req,res)=>{
 export const getUserCourseProgress = async (req,res)=>{
     try {
         const userId = req.auth.userId
-        const {courseId, lectureId} = req.body
+        const {courseId} = req.body
         const progressData = await courseProgress.findOne({userId,courseId})
+        // console.log(progressData+"from get user progress")
         res.json({success:true, progressData})
     } catch (error) {
         res.json({success:false, message:error.message})
@@ -136,7 +137,7 @@ export const addUserRating = async (req, res)=>{
         if(!course){
             return res.json({success:false,message:'Course not found.'});
         }
-        const user = await User.findById(userid);
+        const user = await User.findById(userId);
         if(!user||!user.enrolledCourses.includes(courseId)){
             return res.json({success:false,message:"User can't rate this course as they have not yet purchased it."})
         }
