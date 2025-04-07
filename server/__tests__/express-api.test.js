@@ -1,16 +1,14 @@
-/**
- * Simple Express API tests
- */
+
 import request from 'supertest';
 import express from 'express';
 
-// Create a simple Express app for testing
+
 const app = express();
 
-// Add middleware
+
 app.use(express.json());
 
-// Setup basic routes for testing
+
 app.get('/', (req, res) => res.send('Server is running'));
 
 app.get('/api/health', (req, res) => {
@@ -79,28 +77,27 @@ app.get('/api/courses', (req, res) => {
   });
 });
 
-// 404 handler
+
 app.use((req, res) => {
   res.status(404).json({ message: 'Not Found' });
 });
 
 // Tests
 describe('Express API Tests', () => {
-  // Test 1: Root endpoint
+ 
   test('GET / returns success message', async () => {
     const response = await request(app).get('/');
     expect(response.status).toBe(200);
     expect(response.text).toBe('Server is running');
   });
   
-  // Test 2: Health check
   test('GET /api/health returns healthy status', async () => {
     const response = await request(app).get('/api/health');
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ status: 'healthy' });
   });
   
-  // Test 3: Get all users
+  // Users
   test('GET /api/users returns user list', async () => {
     const response = await request(app).get('/api/users');
     expect(response.status).toBe(200);
@@ -109,7 +106,7 @@ describe('Express API Tests', () => {
     expect(response.body[0].name).toBe('Alice');
   });
   
-  // Test 4: Get single user
+  // Single User
   test('GET /api/users/:id returns a single user', async () => {
     const response = await request(app).get('/api/users/1');
     expect(response.status).toBe(200);
@@ -117,14 +114,13 @@ describe('Express API Tests', () => {
     expect(response.body.name).toBe('Alice');
   });
   
-  // Test 5: 404 for non-existent user
   test('GET /api/users/:id returns 404 for non-existent user', async () => {
     const response = await request(app).get('/api/users/999');
     expect(response.status).toBe(404);
     expect(response.body.message).toBe('User not found');
   });
   
-  // Test 6: Create user
+  // Create User
   test('POST /api/users creates a new user', async () => {
     const newUser = { name: 'Charlie', role: 'student' };
     const response = await request(app)
@@ -136,7 +132,7 @@ describe('Express API Tests', () => {
     expect(response.body.role).toBe('student');
   });
   
-  // Test 7: Validation for creating user
+  // Validate user login
   test('POST /api/users validates required fields', async () => {
     const response = await request(app)
       .post('/api/users')
@@ -146,14 +142,14 @@ describe('Express API Tests', () => {
     expect(response.body.message).toContain('required');
   });
   
-  // Test 8: Delete user
+  // Deleter User
   test('DELETE /api/users/:id deletes a user', async () => {
     const response = await request(app).delete('/api/users/1');
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('User deleted');
   });
   
-  // Test 9: Update user
+  // Update User
   test('PUT /api/users/:id updates a user', async () => {
     const updatedUser = { name: 'Alice Updated', role: 'instructor' };
     const response = await request(app)
@@ -166,7 +162,7 @@ describe('Express API Tests', () => {
     expect(response.body.role).toBe('instructor');
   });
   
-  // Test 10: Course filtering
+  // Course filtering
   test('GET /api/courses handles query parameters', async () => {
     const response = await request(app)
       .get('/api/courses')
